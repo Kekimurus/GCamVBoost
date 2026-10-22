@@ -4,8 +4,8 @@ group = "app.morphe"
 
 patches {
     about {
-        name = "Morphe Patches"
-        description = "Patches for Morphe"
+        name = "GCamVBoost"
+        description = "Google Camera patches for Morphe: Video Boost controls, cloning, and crash fixes"
         source = "git@github.com:MorpheApp/morphe-patches.git"
         author = "MorpheApp"
         contact = "na"
