@@ -2,7 +2,7 @@ plugins {
     `java-library`
 }
 
-description = "Provide Android API stubs for Morphe Patches."
+description = "Android API stubs for GCamVBoost."
 
 java {
     sourceCompatibility = JavaVersion.VERSION_11

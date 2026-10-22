@@ -6,10 +6,10 @@ patches {
     about {
         name = "GCamVBoost"
         description = "Google Camera patches for Morphe: Video Boost controls, cloning, and crash fixes"
-        source = "git@github.com:MorpheApp/morphe-patches.git"
-        author = "MorpheApp"
+        source = "git@github.com:Kekimurus/GCamVBoost.git"
+        author = "Kekimurus"
         contact = "na"
-        website = "https://morphe.software"
+        website = "https://github.com/Kekimurus/GCamVBoost"
         license = "GNU General Public License v3.0, with additional GPL section 7 requirements"
     }
 }
@@ -46,10 +46,5 @@ tasks {
 
         classpath = sourceSets["main"].runtimeClasspath + patchListGeneratorClasspath
         mainClass.set("app.morphe.util.PatchListGeneratorKt")
-    }
-
-    // Used by gradle-semantic-release-plugin.
-    publish {
-        dependsOn("generatePatchesList")
     }
 }
