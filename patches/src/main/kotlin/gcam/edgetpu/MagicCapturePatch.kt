@@ -1,9 +1,13 @@
 package gcam.edgetpu
 
+import app.morphe.patcher.extensions.InstructionExtensions.addInstruction
 import app.morphe.patcher.extensions.InstructionExtensions.getInstruction
+import app.morphe.patcher.extensions.InstructionExtensions.instructions
 import app.morphe.patcher.extensions.InstructionExtensions.replaceInstruction
+import app.morphe.patcher.patch.PatchException
 import app.morphe.patcher.patch.booleanOption
 import app.morphe.patcher.patch.bytecodePatch
+import com.android.tools.smali.dexlib2.Opcode
 import com.android.tools.smali.dexlib2.iface.instruction.OneRegisterInstruction
 import com.android.tools.smali.dexlib2.iface.instruction.ReferenceInstruction
 import com.android.tools.smali.dexlib2.iface.reference.FieldReference
@@ -23,7 +27,7 @@ val magicCapturePatch = bytecodePatch(
         key = "patchAddMeEdgeTpu",
         default = true,
         title = "Also fix Add Me (All-In) EdgeTPU crash",
-        description = "Forces DEVICE_UNSPECIFIED in the All-In TFLite person detector to prevent native SIGABRT crashes."
+        description = "Makes Add Me use its CPU models instead of the EdgeTPU ones, which crash (SIGABRT) on re-signed builds."
     )
 
     execute {
@@ -70,6 +74,25 @@ val magicCapturePatch = bytecodePatch(
                 checkCastIndex,
                 "nop"
             )
+
+            // The device enum alone isn't enough: a separate "use EdgeTPU models" flag
+            // (`imc.e`, from flag kom.R in 11.1.040) makes Add Me load the *-custom_op_tpu_26
+            // models and tell the native engine to use the TPU. Force it to false so the
+            // CPU model set (shipped in the same split) is used.
+            //   invoke-virtual {p3, p1}, Lksf;->x(Lkps;)Z
+            //   move-result p1
+            //   iput-boolean p1, p0, Limc;->e:Z
+            val configInsns = configConstructor.instructions
+            val useTpuIndex = configInsns.indices.firstOrNull { i ->
+                val insn = configInsns[i]
+                val field = (insn as? ReferenceInstruction)?.reference as? FieldReference
+                i > 0 && insn.opcode == Opcode.IPUT_BOOLEAN &&
+                        field?.definingClass == configConstructor.definingClass &&
+                        configInsns[i - 1].opcode == Opcode.MOVE_RESULT
+            } ?: throw PatchException("Could not find the Add Me EdgeTPU flag in ${configConstructor.definingClass}")
+
+            val flagRegister = (configInsns[useTpuIndex - 1] as OneRegisterInstruction).registerA
+            configConstructor.addInstruction(useTpuIndex, "const/4 v$flagRegister, 0x0")
         }
     }
 }
